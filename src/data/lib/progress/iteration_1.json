@@ -1,0 +1,32 @@
+
+Action: file_editor view /app/test_reports/iteration_1.json
+Observation: [Showing lines 1-28 of 28 total] /app/test_reports/iteration_1.json:
+1|{
+2|  "summary": "First-finish smoke test. Backend: all 5 endpoint checks pass (root, tips/today, topics, POST/GET progress with max-stars persistence, 400 validation). Frontend: dashboard loads with sticky navbar, motivational banner, 3 subject sections and all 5 topic cards. Fractions topic flow works: lesson blocks, quiz card, 4 options, feedback, done-card with score, home-btn returns to dashboard and star-count increments (0 -> 2). No console errors.",
+3|  "tested_scope": ["backend", "frontend", "integration"],
+4|  "passed": [
+5|    "GET /api/ returns {service:'sparkleway', status:'ok'} 200",
+6|    "GET /api/tips/today returns Tip with quote/tip/tag/day_index",
+7|    "GET /api/topics returns 5 topics with subject and quiz_count",
+8|    "POST /api/progress persists entry; resubmit with lower stars keeps higher (3 retained over 1)",
+9|    "GET /api/progress/{session_id} returns persisted list",
+10|    "POST /api/progress with correct>total returns 400 'correct cannot exceed total'",
+11|    "Dashboard: nav-logo, grade-pill, star-count, motivational-banner, banner-quote, banner-tip, subject-section-math/science/english, topic-card-fractions/decimals/water-cycle/cells/english all present",
+12|    "Topic detail: topic-hero, topic-title 'Fractions', lesson-block-0..2 present",
+13|    "Quiz: quiz-card, quiz-question, quiz-option-0..3 visible; Q1 correct (index 0) triggers 'Nice one!' feedback",
+14|    "done-card appears after Q4 with score-text 'You got 2 out of 4 right.'",
+15|    "home-btn navigates back to dashboard; star-count updated from '0 stars' to '2 stars'",
+16|    "No console errors on 1440x900 viewport"
+17|  ],
+18|  "failed": [
+19|    {"area": "frontend/quiz", "issue": "stars-earned element exists but has empty text content (likely renders visual star icons instead of text)", "evidence": "await page.text_content('[data-testid=\"stars-earned\"]') returned ''", "priority": "LOW"}
+20|  ],
+21|  "action_items": [
+22|    "Optional: if stars-earned is meant to expose readable text for accessibility/testing, consider adding an aria-label or text alongside the star icons."
+23|  ],
+24|  "success_rate": {"backend": "100%", "frontend": "100%"},
+25|  "retest_needed": false,
+26|  "full_testing_deferred": true
+27|}
+28|
+[End of file]
