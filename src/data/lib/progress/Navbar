@@ -1,0 +1,50 @@
+Action: file_editor create /app/frontend/src/components/Navbar.jsx --file-text "import React from \"react\";
+import { Link } from \"react-router-dom\";
+import { Sparkles, GraduationCap, Star } from \"lucide-react\";
+import { getTotalStars } from \"@/lib/progress\";
+
+export const Navbar = () => {
+  const stars = getTotalStars();
+  return (
+    <header
+      data-testid=\"app-navbar\"
+      className=\"sticky top-0 z-40 border-b-[3px] border-stone-900 bg-[#FDFBF7]/95 backdrop-blur\"
+    >
+      <div className=\"mx-auto max-w-7xl px-5 sm:px-8 py-4 flex items-center justify-between gap-4\">
+        <Link
+          to=\"/\"
+          data-testid=\"nav-logo\"
+          className=\"inline-flex items-center gap-3\"
+        >
+          <span className=\"inline-flex h-10 w-10 items-center justify-center rounded-2xl border-[3px] border-stone-900 bg-yellow-300 brut-shadow-sm\">
+            <GraduationCap strokeWidth={3} className=\"h-5 w-5 text-stone-900\" />
+          </span>
+          <span className=\"font-display text-2xl font-bold tracking-tight text-stone-900\">
+            Sparkleway
+          </span>
+        </Link>
+
+        <div className=\"flex items-center gap-3\">
+          <span
+            data-testid=\"grade-pill\"
+            className=\"hidden sm:inline-flex items-center gap-1 rounded-full border-[3px] border-stone-900 bg-white px-3 py-1 font-display text-sm font-bold\"
+          >
+            <Sparkles strokeWidth={3} className=\"h-4 w-4\" />
+            Grade 6 Hub
+          </span>
+          <span
+            data-testid=\"star-count\"
+            className=\"inline-flex items-center gap-1 rounded-full border-[3px] border-stone-900 bg-amber-300 px-3 py-1 font-display text-sm font-bold\"
+          >
+            <Star strokeWidth={3} className=\"h-4 w-4 fill-stone-900\" />
+            {stars} stars
+          </span>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;
+"
+Observation: Create successful: /app/frontend/src/components/Navbar.jsx
