@@ -1,0 +1,381 @@
+
+Action: file_editor create /app/frontend/src/pages/TopicDetail.jsx --file-text "import React, { useMemo, useState } from \"react\";
+import { useParams, Link, useNavigate } from \"react-router-dom\";
+import Navbar from \"@/components/Navbar\";
+import PressableButton from \"@/components/PressableButton\";
+import { TOPICS } from \"@/data/topics\";
+import { saveTopicResult, getTopicProgress } from \"@/lib/progress\";
+import {
+  ArrowLeft,
+  Star,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  PartyPopper,
+} from \"lucide-react\";
+
+const TopicDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const topic = TOPICS[id];
+
+  const [step, setStep] = useState(\"lesson\"); // lesson | quiz | done
+  const [current, setCurrent] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [saved, setSaved] = useState(null);
+
+  const totalQ = topic ? topic.quiz.length : 0;
+  const correctCount = useMemo(
+    () => answers.filter((a) => a.correct).length,
+    [answers],
+  );
+
+  if (!topic) {
+    return (
+      <div className=\"min-h-screen\">
+        <Navbar />
+        <main className=\"mx-auto max-w-3xl px-5 sm:px-8 py-16\">
+          <div className=\"rounded-3xl border-[3px] border-stone-900 bg-white brut-shadow p-8\">
+            <h1 className=\"font-display text-3xl font-bold\">Topic not found</h1>
+            <p className=\"mt-2 text-stone-600 font-semibold\">
+              We couldn't find that topic. Head back to the dashboard.
+            </p>
+            <PressableButton
+              className=\"mt-6\"
+              onClick={() => navigate(\"/\")}
+              data-testid=\"back-home-btn\"
+            >
+              <ArrowLeft strokeWidth={3} className=\"h-4 w-4\" />
+              Back home
+            </PressableButton>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const q = topic.quiz[current];
+
+  const submit = () => {
+    if (picked === null) return;
+    const isCorrect = picked === q.answer;
+    const next = [...answers, { picked, correct: isCorrect }];
+    setAnswers(next);
+    // slight delay before advancing to let feedback show
+    setTimeout(() => {
+      if (current + 1 >= totalQ) {
+        const stars = next.filter((a) => a.correct).length;
+        saveTopicResult(topic.id, stars, stars, totalQ).then(setSaved);
+        setStep(\"done\");
+      } else {
+        setCurrent(current + 1);
+        setPicked(null);
+      }
+    }, 900);
+  };
+
+  const restart = () => {
+    setStep(\"lesson\");
+    setCurrent(0);
+    setPicked(null);
+    setAnswers([]);
+    setSaved(null);
+  };
+
+  const showFeedback = picked !== null && answers.length === current + 1;
+  const lastAnswer = answers[answers.length - 1];
+
+  return (
+    <div className=\"min-h-screen\">
+      <Navbar />
+      <main className=\"mx-auto max-w-4xl px-5 sm:px-8 py-8 sm:py-12\">
+        {/* Header */}
+        <div className=\"flex items-center justify-between flex-wrap gap-4\">
+          <Link
+            to=\"/\"
+            data-testid=\"back-link\"
+            className=\"inline-flex items-center gap-2 rounded-full border-[3px] border-stone-900 bg-white px-4 py-2 font-display font-bold text-sm brut-shadow-sm pressable\"
+          >
+            <ArrowLeft strokeWidth={3} className=\"h-4 w-4\" />
+            All subjects
+          </Link>
+          <div className=\"flex items-center gap-2\">
+            {step !== \"done\" &&
+              Array.from({ length: totalQ }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-3 w-6 rounded-full border-[2px] border-stone-900 ${
+                    i < answers.length
+                      ? answers[i]?.correct
+                        ? \"bg-emerald-400\"
+                        : \"bg-rose-300\"
+                      : i === current && step === \"quiz\"
+                        ? \"bg-yellow-300\"
+                        : \"bg-white\"
+                  }`}
+                />
+              ))}
+          </div>
+        </div>
+
+        {/* Topic Hero */}
+        <section
+          className=\"mt-6 rounded-3xl border-[3px] border-stone-900 brut-shadow overflow-hidden\"
+          style={{ background: topic.color }}
+          data-testid=\"topic-hero\"
+        >
+          <div className=\"grid gap-6 md:grid-cols-[1.4fr,1fr] p-6 sm:p-10\">
+            <div>
+              <span className=\"inline-flex items-center gap-2 rounded-full border-[3px] border-stone-900 bg-white px-3 py-1 font-display text-xs font-bold\">
+                <Sparkles strokeWidth={3} className=\"h-4 w-4\" />
+                {topic.emoji} {topic.subtitle}
+              </span>
+              <h1
+                data-testid=\"topic-title\"
+                className=\"font-display mt-3 text-4xl sm:text-5xl font-bold text-stone-900 leading-[1.05]\"
+              >
+                {topic.title}
+              </h1>
+              <p className=\"mt-4 text-lg font-semibold text-stone-800 max-w-xl\">
+                {topic.intro}
+              </p>
+            </div>
+            <div className=\"hidden md:block\">
+              <div className=\"h-full w-full rounded-2xl border-[3px] border-stone-900 bg-white brut-shadow-sm overflow-hidden\">
+                <img
+                  src={topic.cover}
+                  alt={topic.title}
+                  className=\"h-full w-full object-cover\"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* LESSON */}
+        {step === \"lesson\" && (
+          <section className=\"mt-10\">
+            <div className=\"grid gap-5\">
+              {topic.lessons.map((l, i) => (
+                <article
+                  key={i}
+                  data-testid={`lesson-block-${i}`}
+                  className=\"rounded-3xl border-[3px] border-stone-900 bg-white brut-shadow p-6 sm:p-8\"
+                >
+                  <h2 className=\"font-display text-2xl font-bold text-stone-900\">
+                    {l.heading}
+                  </h2>
+                  <p className=\"mt-3 text-base sm:text-lg font-semibold text-stone-700\">
+                    {l.body}
+                  </p>
+                  <div className=\"mt-4 rounded-2xl border-[3px] border-stone-900 bg-yellow-100 p-4\">
+                    <p className=\"font-display font-bold text-stone-900\">
+                      Example
+                    </p>
+                    <p className=\"mt-1 font-semibold text-stone-800\">
+                      {l.example}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className=\"mt-8 flex flex-wrap items-center gap-3\">
+              <PressableButton
+                variant=\"ink\"
+                size=\"lg\"
+                data-testid=\"start-quiz-btn\"
+                onClick={() => setStep(\"quiz\")}
+              >
+                Start practice
+                <Sparkles strokeWidth={3} className=\"h-4 w-4\" />
+              </PressableButton>
+              <span className=\"text-sm font-semibold text-stone-600\">
+                {totalQ} quick questions · earn up to {totalQ} stars
+              </span>
+            </div>
+          </section>
+        )}
+
+        {/* QUIZ */}
+        {step === \"quiz\" && (
+          <section className=\"mt-10\">
+            <div
+              className=\"rounded-3xl border-[3px] border-stone-900 bg-white brut-shadow p-6 sm:p-10\"
+              data-testid=\"quiz-card\"
+            >
+              <p className=\"font-display text-sm font-bold uppercase tracking-widest text-stone-500\">
+                Question {current + 1} of {totalQ}
+              </p>
+              <h2
+                data-testid=\"quiz-question\"
+                className=\"font-display mt-2 text-2xl sm:text-3xl font-bold text-stone-900\"
+              >
+                {q.q}
+              </h2>
+
+              <div className=\"mt-6 grid gap-3\">
+                {q.options.map((opt, idx) => {
+                  const isPicked = picked === idx;
+                  const isCorrect = showFeedback && idx === q.answer;
+                  const isWrongPick = showFeedback && isPicked && idx !== q.answer;
+                  return (
+                    <button
+                      key={idx}
+                      data-testid={`quiz-option-${idx}`}
+                      disabled={showFeedback}
+                      onClick={() => setPicked(idx)}
+                      className={`text-left rounded-2xl border-[3px] border-stone-900 px-5 py-4 font-display font-bold text-lg pressable brut-shadow-sm flex items-center gap-4
+                        ${
+                          isCorrect
+                            ? \"bg-emerald-300\"
+                            : isWrongPick
+                              ? \"bg-rose-200\"
+                              : isPicked
+                                ? \"bg-yellow-200\"
+                                : \"bg-white\"
+                        }`}
+                    >
+                      <span className=\"inline-flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-stone-900 bg-white font-display font-bold\">
+                        {String.fromCharCode(65 + idx)}
+                      </span>
+                      <span className=\"flex-1 text-stone-900\">{opt}</span>
+                      {isCorrect && (
+                        <CheckCircle2
+                          strokeWidth={3}
+                          className=\"h-6 w-6 text-emerald-700 star-pop\"
+                        />
+                      )}
+                      {isWrongPick && (
+                        <XCircle
+                          strokeWidth={3}
+                          className=\"h-6 w-6 text-rose-700\"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {showFeedback && (
+                <div
+                  data-testid=\"quiz-feedback\"
+                  className={`mt-6 rounded-2xl border-[3px] border-stone-900 p-4 font-semibold ${
+                    lastAnswer?.correct ? \"bg-emerald-100\" : \"bg-yellow-100\"
+                  }`}
+                >
+                  <p className=\"font-display font-bold text-stone-900\">
+                    {lastAnswer?.correct ? \"Nice one! ⭐\" : \"Not quite — here's the trick:\"}
+                  </p>
+                  <p className=\"mt-1 text-stone-800\">{q.why}</p>
+                </div>
+              )}
+
+              <div className=\"mt-6 flex flex-wrap items-center gap-3\">
+                <PressableButton
+                  variant=\"ink\"
+                  size=\"lg\"
+                  onClick={submit}
+                  disabled={picked === null || showFeedback}
+                  data-testid=\"submit-answer-btn\"
+                  className={picked === null || showFeedback ? \"opacity-60\" : \"\"}
+                >
+                  {showFeedback
+                    ? \"Next…\"
+                    : current + 1 === totalQ
+                      ? \"Finish\"
+                      : \"Check answer\"}
+                </PressableButton>
+                <button
+                  onClick={restart}
+                  data-testid=\"restart-quiz-btn\"
+                  className=\"inline-flex items-center gap-2 font-display font-bold text-stone-700 hover:text-stone-900 text-sm underline underline-offset-4 decoration-2\"
+                >
+                  <RotateCcw strokeWidth={3} className=\"h-4 w-4\" /> Start over
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* DONE */}
+        {step === \"done\" && (
+          <section className=\"mt-10\">
+            <div
+              className=\"rounded-3xl border-[3px] border-stone-900 brut-shadow p-8 sm:p-12\"
+              style={{ background: topic.color }}
+              data-testid=\"done-card\"
+            >
+              <div className=\"flex items-center gap-3\">
+                <PartyPopper strokeWidth={3} className=\"h-8 w-8 text-stone-900\" />
+                <p className=\"font-display font-bold uppercase tracking-widest text-sm text-stone-900\">
+                  Nice work
+                </p>
+              </div>
+              <h2
+                data-testid=\"score-text\"
+                className=\"font-display mt-3 text-4xl sm:text-5xl font-bold text-stone-900\"
+              >
+                You got {correctCount} out of {totalQ} right.
+              </h2>
+              <div className=\"mt-4 flex items-center gap-1\" data-testid=\"stars-earned\">
+                {Array.from({ length: totalQ }).map((_, i) => (
+                  <Star
+                    key={i}
+                    strokeWidth={3}
+                    className={`h-9 w-9 star-pop ${
+                      i < correctCount
+                        ? \"fill-amber-400 text-amber-500\"
+                        : \"text-stone-500\"
+                    }`}
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  />
+                ))}
+              </div>
+              <p className=\"mt-4 max-w-xl text-lg font-semibold text-stone-800\">
+                {correctCount === totalQ
+                  ? \"Perfect run! Come back tomorrow for a fresh tip.\"
+                  : correctCount >= Math.ceil(totalQ / 2)
+                    ? \"Solid! One more try and you'll ace it.\"
+                    : \"You just made your brain stronger. Try again — you'll see the pattern.\"}
+              </p>
+
+              <div className=\"mt-8 flex flex-wrap gap-3\">
+                <PressableButton
+                  variant=\"ink\"
+                  size=\"lg\"
+                  onClick={restart}
+                  data-testid=\"retry-btn\"
+                >
+                  <RotateCcw strokeWidth={3} className=\"h-4 w-4\" />
+                  Try again
+                </PressableButton>
+                <PressableButton
+                  as={Link}
+                  to=\"/\"
+                  variant=\"ghost\"
+                  size=\"lg\"
+                  data-testid=\"home-btn\"
+                >
+                  Back to dashboard
+                </PressableButton>
+              </div>
+
+              {saved && (
+                <p className=\"mt-4 text-sm font-semibold text-stone-700\">
+                  Best so far: {saved.stars}/{totalQ} stars · attempts: {saved.attempts}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default TopicDetail;
+"
+Observation: Create successful: /app/frontend/src/pages/TopicDetail.jsx
