@@ -1,0 +1,40 @@
+
+Action: file_editor create /app/frontend/src/components/PressableButton.jsx --file-text "import React from \"react\";
+
+// Reusable pressable neo-brutalist button.
+// variants: primary (yellow), success (green), ghost (white)
+
+const variants = {
+  primary: \"bg-yellow-300 text-stone-900\",
+  success: \"bg-emerald-300 text-stone-900\",
+  ghost: \"bg-white text-stone-900\",
+  danger: \"bg-rose-300 text-stone-900\",
+  ink: \"bg-stone-900 text-white\",
+};
+
+export const PressableButton = ({
+  children,
+  variant = \"primary\",
+  size = \"md\",
+  className = \"\",
+  as: Comp = \"button\",
+  ...props
+}) => {
+  const sizes = {
+    sm: \"px-4 py-2 text-sm\",
+    md: \"px-6 py-3 text-base\",
+    lg: \"px-8 py-4 text-lg\",
+  };
+  return (
+    <Comp
+      className={`font-display font-semibold rounded-full border-[3px] border-stone-900 brut-shadow pressable inline-flex items-center justify-center gap-2 ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </Comp>
+  );
+};
+
+export default PressableButton;
+"
+Observation: Create successful: /app/frontend/src/components/PressableButton.jsx
