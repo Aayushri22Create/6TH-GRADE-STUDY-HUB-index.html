@@ -1,0 +1,65 @@
+
+Action: file_editor create /app/frontend/src/lib/progress.js --file-text "// Simple browser-session id + progress helpers.
+// Uses localStorage for offline speed, and mirrors to backend for cross-device.
+
+import axios from \"axios\";
+
+const KEY = \"sparkleway.progress.v1\";
+const SID_KEY = \"sparkleway.sid\";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+export const getSessionId = () => {
+  let sid = localStorage.getItem(SID_KEY);
+  if (!sid) {
+    sid = \"sk_\" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    localStorage.setItem(SID_KEY, sid);
+  }
+  return sid;
+};
+
+export const loadProgress = () => {
+  try {
+    return JSON.parse(localStorage.getItem(KEY)) || {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveTopicResult = async (topicId, stars, correct, total) => {
+  const all = loadProgress();
+  const prev = all[topicId] || { stars: 0, bestCorrect: 0, total, attempts: 0 };
+  all[topicId] = {
+    stars: Math.max(prev.stars, stars),
+    bestCorrect: Math.max(prev.bestCorrect, correct),
+    total,
+    attempts: (prev.attempts || 0) + 1,
+    lastAt: new Date().toISOString(),
+  };
+  localStorage.setItem(KEY, JSON.stringify(all));
+
+  // Best-effort sync to backend, non-blocking
+  try {
+    await axios.post(`${API}/progress`, {
+      session_id: getSessionId(),
+      topic_id: topicId,
+      stars,
+      correct,
+      total,
+    });
+  } catch (e) {
+    // Silent fallback — localStorage is source of truth
+    console.warn(\"progress sync failed\", e?.message);
+  }
+  return all[topicId];
+};
+
+export const getTopicProgress = (topicId) => loadProgress()[topicId] || null;
+
+export const getTotalStars = () => {
+  const all = loadProgress();
+  return Object.values(all).reduce((sum, p) => sum + (p.stars || 0), 0);
+};
+"
+Observation: Create successful: /app/frontend/src/lib/progress.js
